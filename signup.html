@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sign up — Xchange</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="signup.js" defer></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --surface3: #222232;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.14);
+    --text: #f0f0f8;
+    --muted: #6b6b88;
+    --accent: #7c6bff;
+    --accent-dim: rgba(124,107,255,0.15);
+    --green: #2dd4a0;
+    --red: #ff6b6b;
+    --red-dim: rgba(255,107,107,0.12);
+    --mono: 'DM Mono', monospace;
+    --display: 'Syne', sans-serif;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--display);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    padding-top: 6rem;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 50% 50% at 80% 15%, rgba(124,107,255,0.1) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 10% 80%, rgba(45,212,160,0.07) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── TOP NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem; border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.85); backdrop-filter: blur(12px);
+    z-index: 10;
+  }
+  .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); text-decoration: none; }
+  .logo span { color: var(--accent); }
+  .nav-right { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+  .nav-right a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .nav-right a:hover { text-decoration: underline; }
+
+  /* ── LAYOUT ── */
+  .card-wrap {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 440px;
+  }
+
+  /* ── PERKS STRIP ── */
+  .perks {
+    display: flex; gap: 0; margin-bottom: 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .perk {
+    flex: 1; padding: 10px 12px; text-align: center; border-right: 1px solid var(--border);
+  }
+  .perk:last-child { border-right: none; }
+  .perk-icon { font-size: 16px; margin-bottom: 3px; }
+  .perk-text { font-size: 10px; color: var(--muted); line-height: 1.4; font-family: var(--mono); }
+  .perk-text strong { color: var(--text); display: block; font-size: 11px; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+  }
+
+  .card-header { margin-bottom: 1.75rem; }
+  .card-header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .card-header p { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+  /* ── FORM ── */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-field { margin-bottom: 1rem; }
+  .form-field label {
+    display: block; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 7px;
+  }
+  .form-input {
+    width: 100%; height: 44px; padding: 0 14px;
+    font-size: 14px; font-family: var(--display);
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    outline: none; transition: border-color 0.15s;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input.error { border-color: var(--red); }
+
+  .password-wrap { position: relative; }
+  .password-wrap .form-input { padding-right: 44px; }
+  .toggle-pw {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px;
+    font-size: 16px; transition: color 0.15s; line-height: 1;
+  }
+  .toggle-pw:hover { color: var(--text); }
+
+  .field-error { font-size: 11px; color: var(--red); margin-top: 5px; font-family: var(--mono); display: none; }
+
+  /* ── PASSWORD STRENGTH ── */
+  .strength-bar { display: flex; gap: 4px; margin-top: 7px; }
+  .strength-seg {
+    height: 3px; flex: 1; border-radius: 999px;
+    background: var(--surface3); transition: background 0.2s;
+  }
+  .strength-label { font-size: 11px; color: var(--muted); margin-top: 4px; font-family: var(--mono); }
+
+  /* ── CURRENCY PREFERENCE ── */
+  .cur-select {
+    width: 100%; height: 44px; padding: 0 12px;
+    font-size: 14px; font-family: var(--display);
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    outline: none; cursor: pointer; transition: border-color 0.15s;
+  }
+  .cur-select:focus { border-color: var(--accent); }
+  optgroup { background: var(--surface2); }
+  option   { background: var(--surface2); }
+
+  /* ── TERMS ── */
+  .terms-row { display: flex; align-items: flex-start; gap: 10px; margin: 1rem 0; }
+  .terms-row input[type="checkbox"] { margin-top: 3px; accent-color: var(--accent); flex-shrink: 0; }
+  .terms-row label { font-size: 12px; color: var(--muted); line-height: 1.5; cursor: pointer; }
+  .terms-row label a { color: var(--accent); text-decoration: none; }
+  .terms-row label a:hover { text-decoration: underline; }
+
+  /* ── SUBMIT ── */
+  .btn-submit {
+    width: 100%; height: 46px; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 700; font-family: var(--display);
+    background: var(--accent); border: none; color: #fff;
+    cursor: pointer; transition: background 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-submit:hover { background: #9b8dff; }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── DIVIDER ── */
+  .divider { display: flex; align-items: center; gap: 12px; margin: 1.25rem 0; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .divider span { font-size: 11px; color: var(--muted); white-space: nowrap; font-family: var(--mono); }
+
+  /* ── OAUTH ── */
+  .oauth-btn {
+    width: 100%; height: 42px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 600; font-family: var(--display);
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-bottom: 8px; text-decoration: none;
+  }
+  .oauth-btn:hover { border-color: var(--border-hover); background: var(--surface3); }
+  .oauth-icon { width: 18px; height: 18px; flex-shrink: 0; }
+
+  /* ── ALERT ── */
+  .alert {
+    border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px;
+    font-family: var(--mono); margin-bottom: 1.25rem; display: none;
+  }
+  .alert.error   { background: var(--red-dim); border: 1px solid rgba(255,107,107,0.2); color: var(--red); }
+  .alert.success { background: rgba(45,212,160,0.1); border: 1px solid rgba(45,212,160,0.2); color: var(--green); }
+
+  /* ── SPINNER ── */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: none;
+  }
+
+  /* ── FOOTER ── */
+  .card-footer {
+    text-align: center; margin-top: 1.5rem;
+    font-size: 13px; color: var(--muted);
+  }
+  .card-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .card-footer a:hover { text-decoration: underline; }
+
+  @media (max-width: 480px) {
+    nav { padding: 1rem 1.25rem; }
+    .card { padding: 1.5rem; }
+    .form-row { grid-template-columns: 1fr; }
+    .perks { flex-direction: column; }
+    .perk { border-right: none; border-bottom: 1px solid var(--border); }
+    .perk:last-child { border-bottom: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="logo">X<span>change</span></a>
+  <div class="nav-right">
+    Already have an account? <a href="login.html">Log in</a>
+  </div>
+</nav>
+
+<!-- PERKS -->
+<div class="card-wrap">
+  <div class="perks">
+    <div class="perk">
+      <div class="perk-icon">🌍</div>
+      <div class="perk-text"><strong>30+ currencies</strong>incl. crypto</div>
+    </div>
+    <div class="perk">
+      <div class="perk-icon">⚡</div>
+      <div class="perk-text"><strong>Live rates</strong>updated hourly</div>
+    </div>
+    <div class="perk">
+      <div class="perk-icon">🔒</div>
+      <div class="perk-text"><strong>Secure wallets</strong>your data, private</div>
+    </div>
+    <div class="perk">
+      <div class="perk-icon">🆓</div>
+      <div class="perk-text"><strong>Free forever</strong>no credit card</div>
+    </div>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="card">
+    <div class="card-header">
+      <h1>Create your account</h1>
+      <p>Start converting currencies in seconds.</p>
+    </div>
+
+    <div class="alert" id="alert"></div>
+
+    <!-- OAUTH -->
+    <a class="oauth-btn" href="#" id="googleBtn">
+      <svg class="oauth-icon" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+        <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+        <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+      </svg>
+      Sign up with Google
+    </a>
+
+    <div class="divider"><span>or sign up with email</span></div>
+
+    <!-- NAME ROW -->
+    <div class="form-row">
+      <div class="form-field">
+        <label>First name</label>
+        <input class="form-input" type="text" id="firstName" placeholder="Ada" autocomplete="given-name" />
+        <div class="field-error" id="firstNameErr">Required.</div>
+      </div>
+      <div class="form-field">
+        <label>Last name</label>
+        <input class="form-input" type="text" id="lastName" placeholder="Lovelace" autocomplete="family-name" />
+        <div class="field-error" id="lastNameErr">Required.</div>
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label>Email address</label>
+      <input class="form-input" type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+      <div class="field-error" id="emailErr">Please enter a valid email.</div>
+    </div>
+
+    <div class="form-field">
+      <label>Password</label>
+      <div class="password-wrap">
+        <input class="form-input" type="password" id="password" placeholder="At least 8 characters" autocomplete="new-password" />
+        <button class="toggle-pw" id="togglePw" type="button" title="Show/hide">👁</button>
+      </div>
+      <div class="strength-bar">
+        <div class="strength-seg" id="s1"></div>
+        <div class="strength-seg" id="s2"></div>
+        <div class="strength-seg" id="s3"></div>
+        <div class="strength-seg" id="s4"></div>
+      </div>
+      <div class="strength-label" id="strengthLabel">Enter a password</div>
+      <div class="field-error" id="pwErr">Must be at least 8 characters.</div>
+    </div>
+
+    <div class="form-field">
+      <label>Confirm password</label>
+      <div class="password-wrap">
+        <input class="form-input" type="password" id="confirmPw" placeholder="Repeat password" autocomplete="new-password" />
+        <button class="toggle-pw" id="togglePw2" type="button" title="Show/hide">👁</button>
+      </div>
+      <div class="field-error" id="confirmPwErr">Passwords don't match.</div>
+    </div>
+
+    <div class="form-field">
+      <label>Home currency</label>
+      <select class="cur-select" id="homeCur">
+        <optgroup label="Major">
+          <option value="USD">USD — US Dollar</option>
+          <option value="EUR">EUR — Euro</option>
+          <option value="GBP">GBP — British Pound</option>
+          <option value="JPY">JPY — Japanese Yen</option>
+          <option value="CHF">CHF — Swiss Franc</option>
+          <option value="CAD">CAD — Canadian Dollar</option>
+          <option value="AUD">AUD — Australian Dollar</option>
+        </optgroup>
+        <optgroup label="Africa & Middle East">
+          <option value="KES" selected>KES — Kenyan Shilling</option>
+          <option value="NGN">NGN — Nigerian Naira</option>
+          <option value="ZAR">ZAR — South African Rand</option>
+          <option value="EGP">EGP — Egyptian Pound</option>
+          <option value="AED">AED — UAE Dirham</option>
+          <option value="SAR">SAR — Saudi Riyal</option>
+        </optgroup>
+        <optgroup label="Asia">
+          <option value="INR">INR — Indian Rupee</option>
+          <option value="SGD">SGD — Singapore Dollar</option>
+          <option value="HKD">HKD — Hong Kong Dollar</option>
+          <option value="CNY">CNY — Chinese Yuan</option>
+        </optgroup>
+        <optgroup label="Americas">
+          <option value="MXN">MXN — Mexican Peso</option>
+          <option value="BRL">BRL — Brazilian Real</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="terms-row">
+      <input type="checkbox" id="terms" />
+      <label for="terms">
+        I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. I understand my data is stored locally on my device.
+      </label>
+    </div>
+
+    <button class="btn-submit" id="submitBtn" type="button">
+      <span id="submitLabel">Create account</span>
+      <div class="spinner" id="spinner"></div>
+    </button>
+
+    <div class="card-footer">
+      Already have an account? <a href="login.html">Log in →</a>
+    </div>
+  </div>
+</div>
+<script src="signup.js" defer></script>
+</body>
+</html>

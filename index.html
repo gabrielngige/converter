@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Xchange — Currency Converter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="index.js" defer></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --surface3: #222232;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.14);
+    --text: #f0f0f8;
+    --muted: #6b6b88;
+    --accent: #7c6bff;
+    --accent-dim: rgba(124,107,255,0.15);
+    --accent-glow: rgba(124,107,255,0.3);
+    --green: #2dd4a0;
+    --green-dim: rgba(45,212,160,0.12);
+    --red: #ff6b6b;
+    --red-dim: rgba(255,107,107,0.12);
+    --amber: #f5a623;
+    --amber-dim: rgba(245,166,35,0.12);
+    --mono: 'DM Mono', monospace;
+    --display: 'Syne', sans-serif;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--display);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* BACKGROUND TEXTURE */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 10%, rgba(124,107,255,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 80% 80%, rgba(45,212,160,0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+  /* NAV */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2.5rem; padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    gap: 12px; flex-wrap: wrap;
+  }
+  .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); flex-shrink: 0; }
+  .logo span { color: var(--accent); }
+  .nav-tabs { display: flex; gap: 4px; background: var(--surface); border-radius: var(--radius-sm); padding: 4px; }
+  .nav-tab {
+    padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; background: transparent; color: var(--muted);
+    font-family: var(--display); transition: all 0.15s; white-space: nowrap;
+  }
+  .nav-tab.active { background: var(--surface3); color: var(--text); }
+
+  /* AUTH BUTTONS */
+  .nav-auth { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+  .btn-login {
+    padding: 7px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+    font-family: var(--display); color: var(--muted); text-decoration: none;
+    border: 1px solid var(--border); background: transparent; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-login:hover { color: var(--text); border-color: var(--border-hover); }
+  .btn-signup {
+    padding: 7px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+    font-family: var(--display); color: #fff; text-decoration: none;
+    background: var(--accent); border: 1px solid transparent; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-signup:hover { background: #9b8dff; }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* API STATUS */
+  .api-banner {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 1.5rem;
+    font-size: 12px; font-family: var(--mono);
+  }
+  .api-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); flex-shrink: 0; }
+  .api-dot.live { background: var(--green); animation: pulse 2s infinite; }
+  .api-dot.err { background: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .api-msg { color: var(--muted); flex: 1; }
+  .api-msg strong { color: var(--text); }
+  .api-config-btn {
+    padding: 4px 10px; border-radius: 6px; font-size: 11px; font-family: var(--mono);
+    background: var(--surface3); border: 1px solid var(--border); color: var(--muted);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .api-config-btn:hover { color: var(--text); border-color: var(--border-hover); }
+
+  /* CONVERTER CARD */
+  .converter-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem;
+  }
+
+  .convert-row {
+    display: grid; grid-template-columns: 1fr 44px 1fr; gap: 12px; align-items: end;
+  }
+
+  .field-group label {
+    display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+  }
+
+  .amount-input {
+    width: 100%; height: 52px; padding: 0 14px;
+    font-size: 22px; font-weight: 700; font-family: var(--mono);
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    transition: border-color 0.15s; outline: none;
+  }
+  .amount-input:focus { border-color: var(--accent); }
+  .amount-input[readonly] { opacity: 0.75; cursor: default; font-size: 20px; }
+
+  .cur-select {
+    width: 100%; height: 40px; padding: 0 10px; margin-top: 8px;
+    font-size: 13px; font-weight: 500; font-family: var(--display);
+    background: var(--surface3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text); cursor: pointer; outline: none;
+    transition: border-color 0.15s;
+  }
+  .cur-select:focus { border-color: var(--accent); }
+  optgroup { background: var(--surface3); color: var(--muted); font-size: 11px; }
+  option { background: var(--surface3); color: var(--text); }
+
+  .swap-btn {
+    width: 44px; height: 44px; border-radius: var(--radius-sm);
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer; display: flex; align-items: center;
+    justify-content: center; align-self: end; transition: all 0.2s; flex-shrink: 0;
+  }
+  .swap-btn:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); transform: rotate(180deg); }
+  .swap-btn svg { width: 16px; height: 16px; }
+
+  /* RATE DISPLAY */
+  .rate-display {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface2); border-radius: var(--radius-sm);
+    padding: 10px 14px; margin-top: 1rem;
+  }
+  .rate-label { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  .rate-value { font-size: 13px; font-weight: 500; font-family: var(--mono); color: var(--green); }
+  .rate-timestamp { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+
+  /* QUICK AMOUNTS */
+  .quick-pills { display: flex; gap: 6px; margin-top: 1rem; flex-wrap: wrap; }
+  .pill {
+    padding: 5px 12px; border-radius: 999px; font-size: 12px; font-family: var(--mono);
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .pill:hover, .pill.active {
+    background: var(--accent-dim); border-color: var(--accent); color: var(--accent);
+  }
+
+  /* SAVE TO WALLET BTN */
+  .save-row { margin-top: 1rem; display: flex; gap: 8px; align-items: center; }
+  .btn-primary {
+    padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+    font-family: var(--display); background: var(--accent); border: none;
+    color: #fff; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-primary:hover { background: #9b8dff; }
+  .btn-secondary {
+    padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
+    font-family: var(--display); background: transparent; border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer; transition: all 0.15s;
+  }
+  .btn-secondary:hover { border-color: var(--border-hover); color: var(--text); }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--surface3); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 10px 18px; font-size: 13px; font-family: var(--mono); color: var(--text);
+    transition: transform 0.3s ease; z-index: 999; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.green { border-color: var(--green); color: var(--green); }
+  .toast.red { border-color: var(--red); color: var(--red); }
+
+  /* CRYPTO STRIP */
+  .section-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); margin: 1.5rem 0 0.75rem;
+  }
+  .crypto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+  .crypto-tile {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 10px 12px; cursor: pointer; transition: border-color 0.15s;
+  }
+  .crypto-tile:hover { border-color: var(--border-hover); }
+  .crypto-tile .ct-sym { font-size: 11px; font-weight: 600; color: var(--muted); font-family: var(--mono); }
+  .crypto-tile .ct-price { font-size: 14px; font-weight: 700; color: var(--text); margin: 3px 0 2px; font-family: var(--mono); }
+  .crypto-tile .ct-chg { font-size: 11px; font-family: var(--mono); }
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+
+  /* ── WALLET PANEL ── */
+  .wallet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+  .wallet-header h2 { font-size: 18px; font-weight: 700; }
+
+  .wallet-empty {
+    text-align: center; padding: 3rem 1rem; color: var(--muted);
+    border: 1px dashed var(--border); border-radius: var(--radius); font-size: 14px;
+  }
+  .wallet-empty p { margin-top: 8px; font-size: 13px; }
+
+  .wallet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .wallet-tile {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1rem 1.125rem; position: relative; transition: border-color 0.15s;
+  }
+  .wallet-tile:hover { border-color: var(--border-hover); }
+  .wt-code { font-size: 11px; font-weight: 600; color: var(--muted); font-family: var(--mono); letter-spacing: 0.08em; }
+  .wt-name { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .wt-bal { font-size: 24px; font-weight: 700; color: var(--text); margin: 8px 0 4px; font-family: var(--mono); letter-spacing: -1px; }
+  .wt-usd { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .wt-linked { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; font-size: 11px; color: var(--green); font-family: var(--mono); }
+  .wt-del {
+    position: absolute; top: 10px; right: 10px; width: 22px; height: 22px;
+    border-radius: 50%; background: transparent; border: none; cursor: pointer;
+    color: var(--muted); font-size: 16px; display: flex; align-items: center;
+    justify-content: center; transition: all 0.15s; line-height: 1;
+  }
+  .wt-del:hover { background: var(--red-dim); color: var(--red); }
+
+  /* TX HISTORY */
+  .tx-section { margin-top: 2rem; }
+  .tx-list { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .tx-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .tx-row:last-child { border-bottom: none; }
+  .tx-row:hover { background: var(--surface); }
+  .tx-pair { font-family: var(--mono); font-weight: 500; }
+  .tx-amt { font-family: var(--mono); text-align: right; }
+  .tx-amt .tx-from { color: var(--muted); font-size: 12px; }
+  .tx-amt .tx-to { color: var(--text); font-weight: 600; }
+  .tx-date { font-size: 11px; color: var(--muted); font-family: var(--mono); min-width: 90px; text-align: right; }
+
+  /* ── FUNDING PANEL ── */
+  .funding-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+  .funding-header h2 { font-size: 18px; font-weight: 700; }
+
+  .funding-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+  .funding-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1rem 1.125rem; position: relative;
+  }
+  .fc-type { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .fc-name { font-size: 15px; font-weight: 600; margin: 4px 0 2px; }
+  .fc-detail { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  .fc-linked-curs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .fc-cur-badge {
+    padding: 2px 8px; border-radius: 999px; font-size: 11px; font-family: var(--mono);
+    background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(124,107,255,0.2);
+  }
+  .fc-del {
+    position: absolute; top: 10px; right: 10px; width: 22px; height: 22px;
+    border-radius: 50%; background: transparent; border: none; cursor: pointer;
+    color: var(--muted); font-size: 16px; display: flex; align-items: center;
+    justify-content: center; transition: all 0.15s;
+  }
+  .fc-del:hover { background: var(--red-dim); color: var(--red); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100;
+    display: none; align-items: center; justify-content: center; padding: 1rem;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.5rem; width: 100%; max-width: 420px;
+  }
+  .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 1.25rem; }
+  .form-field { margin-bottom: 1rem; }
+  .form-field label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .form-input, .form-select {
+    width: 100%; height: 40px; padding: 0 12px; font-size: 14px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text); font-family: var(--display);
+    outline: none; transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-select:focus { border-color: var(--accent); }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; }
+
+  /* SAVE-TO-WALLET MODAL SPECIFICS */
+  .stw-summary {
+    background: var(--surface2); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 1rem;
+    font-family: var(--mono); font-size: 13px;
+  }
+  .stw-summary .stw-main { font-size: 18px; font-weight: 700; color: var(--text); }
+  .stw-summary .stw-sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+  /* SETTINGS PANEL */
+  .settings-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem;
+  }
+  .settings-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 1rem; }
+  .settings-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .settings-row:last-child { margin-bottom: 0; }
+  .settings-label { font-size: 13px; color: var(--muted); }
+  .settings-value { font-size: 13px; font-family: var(--mono); color: var(--text); }
+  .danger-btn {
+    padding: 8px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500;
+    font-family: var(--display); background: var(--red-dim); border: 1px solid rgba(255,107,107,0.2);
+    color: var(--red); cursor: pointer; transition: all 0.15s;
+  }
+  .danger-btn:hover { background: rgba(255,107,107,0.25); }
+
+  /* API KEY ROW */
+  .api-key-row { display: flex; gap: 8px; align-items: center; }
+  .api-key-input {
+    flex: 1; height: 36px; padding: 0 10px; font-size: 13px; font-family: var(--mono);
+    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text); outline: none;
+  }
+  .api-key-input:focus { border-color: var(--accent); }
+  .save-key-btn {
+    padding: 0 14px; height: 36px; border-radius: var(--radius-sm); font-size: 12px;
+    font-family: var(--display); font-weight: 600; background: var(--accent); border: none;
+    color: #fff; cursor: pointer; transition: background 0.15s; white-space: nowrap;
+  }
+  .save-key-btn:hover { background: #9b8dff; }
+
+  /* RESPONSIVE */
+  @media (max-width: 520px) {
+    .convert-row { grid-template-columns: 1fr 40px 1fr; gap: 8px; }
+    .amount-input { font-size: 18px; height: 48px; }
+    .wallet-grid, .funding-grid { grid-template-columns: 1fr 1fr; }
+    .nav-tab { padding: 6px 10px; font-size: 12px; }
+  }
+  @media (max-width: 380px) {
+    .wallet-grid, .funding-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- NAV -->
+  <nav>
+    <div class="logo">X<span>change</span></div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-panel="convert">Convert</button>
+      <button class="nav-tab" data-panel="wallet">Wallet</button>
+      <button class="nav-tab" data-panel="funding">Funding</button>
+      <button class="nav-tab" data-panel="settings">Settings</button>
+    </div>
+    <!-- AUTH BUTTONS — link to login.html and signup.html -->
+    <div class="nav-auth">
+      <a href="login.html" class="btn-login">Log in</a>
+      <a href="signup.html" class="btn-signup">Sign up</a>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════ CONVERT PANEL -->
+  <div class="panel active" id="panel-convert">
+    <div class="api-banner">
+      <div class="api-dot" id="apiDot"></div>
+      <span class="api-msg" id="apiMsg">Loading rates…</span>
+      <button class="api-config-btn" onclick="switchPanel('settings')">Configure API</button>
+    </div>
+
+    <div class="converter-card">
+      <div class="convert-row">
+        <div class="field-group">
+          <label>Amount</label>
+          <input class="amount-input" type="number" id="amountIn" value="1000" min="0" step="any" />
+          <select class="cur-select" id="fromCur"></select>
+        </div>
+        <button class="swap-btn" id="swapBtn" title="Swap">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 5h12M10 2l4 3-4 3M14 11H2M6 8l-4 3 4 3"/>
+          </svg>
+        </button>
+        <div class="field-group">
+          <label>You get</label>
+          <input class="amount-input" type="text" id="amountOut" readonly />
+          <select class="cur-select" id="toCur"></select>
+        </div>
+      </div>
+
+      <div class="rate-display">
+        <span class="rate-label" id="rateLabel">—</span>
+        <span class="rate-timestamp" id="rateTs">—</span>
+      </div>
+
+      <div class="quick-pills">
+        <span class="pill" data-v="50">50</span>
+        <span class="pill" data-v="100">100</span>
+        <span class="pill" data-v="500">500</span>
+        <span class="pill active" data-v="1000">1,000</span>
+        <span class="pill" data-v="5000">5,000</span>
+        <span class="pill" data-v="10000">10,000</span>
+        <span class="pill" data-v="50000">50,000</span>
+      </div>
+
+      <div class="save-row">
+        <button class="btn-primary" id="saveWalletBtn">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1v14M1 8h14"/></svg>
+          Save to wallet
+        </button>
+        <button class="btn-secondary" id="refreshBtn">↻ Refresh rates</button>
+      </div>
+    </div>
+
+    <div class="section-label">Crypto snapshot</div>
+    <div class="crypto-grid" id="cryptoGrid"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ WALLET PANEL -->
+  <div class="panel" id="panel-wallet">
+    <div class="wallet-header">
+      <h2>My Wallet</h2>
+      <button class="btn-primary" id="addCurBtn">+ Add currency</button>
+    </div>
+    <div id="walletContent"></div>
+
+    <div class="tx-section">
+      <div class="section-label">Transaction history</div>
+      <div id="txContent"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ FUNDING PANEL -->
+  <div class="panel" id="panel-funding">
+    <div class="funding-header">
+      <h2>Funding accounts</h2>
+      <button class="btn-primary" id="addFundingBtn">+ Link account</button>
+    </div>
+    <div class="funding-grid" id="fundingGrid"></div>
+    <div class="wallet-empty" id="fundingEmpty" style="display:none">
+      <strong>No funding accounts linked</strong>
+      <p>Link a bank account or card to fund your currency wallets.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ SETTINGS PANEL -->
+  <div class="panel" id="panel-settings">
+    <div class="settings-card">
+      <h3>API configuration</h3>
+      <div class="settings-row">
+        <span class="settings-label">Provider</span>
+        <span class="settings-value">ExchangeRate-API (v6)</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Endpoint</span>
+        <span class="settings-value" style="font-size:11px">https://v6.exchangerate-api.com/v6/</span>
+      </div>
+      <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:8px">
+        <span class="settings-label">API Key</span>
+        <div class="api-key-row" style="width:100%">
+          <input class="api-key-input" type="password" id="apiKeyInput" placeholder="Paste your ExchangeRate-API key…" />
+          <button class="save-key-btn" id="saveApiKey">Save &amp; fetch</button>
+        </div>
+        <span style="font-size:11px;color:var(--muted)">Get a free key at <a href="https://www.exchangerate-api.com" style="color:var(--accent)" target="_blank" rel="noopener">exchangerate-api.com</a> — 1,500 req/month free.</span>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h3>Base currency</h3>
+      <div class="settings-row">
+        <span class="settings-label">Rates base</span>
+        <select class="form-select" id="baseCurSelect" style="width:140px;height:36px;font-size:13px"></select>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h3>Data &amp; storage</h3>
+      <div class="settings-row">
+        <span class="settings-label">Wallet entries</span>
+        <span class="settings-value" id="statWallets">—</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Transactions</span>
+        <span class="settings-value" id="statTxs">—</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Funding accounts</span>
+        <span class="settings-value" id="statFunding">—</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Last rate fetch</span>
+        <span class="settings-value" id="statLastFetch">—</span>
+      </div>
+      <div class="settings-row" style="margin-top:12px">
+        <button class="danger-btn" id="clearDataBtn">Clear all data</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Save to wallet -->
+<div class="modal-overlay" id="modalSaveWallet">
+  <div class="modal">
+    <h3>Save to wallet</h3>
+    <div class="stw-summary">
+      <div class="stw-main" id="stwMain">—</div>
+      <div class="stw-sub" id="stwSub">—</div>
+    </div>
+    <div class="form-field">
+      <label>Link funding account (optional)</label>
+      <select class="form-select" id="stwFundingPick">
+        <option value="">None — no funding account</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modalSaveWallet')">Cancel</button>
+      <button class="btn-primary" id="confirmSaveWallet">Save balance</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add funding account -->
+<div class="modal-overlay" id="modalFunding">
+  <div class="modal">
+    <h3>Link funding account</h3>
+    <div class="form-field">
+      <label>Account type</label>
+      <select class="form-select" id="fundType">
+        <option value="bank">Bank account</option>
+        <option value="card">Debit / Credit card</option>
+        <option value="mobile">Mobile money</option>
+        <option value="crypto">Crypto wallet</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label>Account name / nickname</label>
+      <input class="form-input" id="fundName" placeholder="e.g. KCB KES Account" />
+    </div>
+    <div class="form-field">
+      <label>Account number / identifier</label>
+      <input class="form-input" id="fundNumber" placeholder="e.g. •••• 4821" />
+    </div>
+    <div class="form-field">
+      <label>Supported currencies</label>
+      <select class="form-select" id="fundCurList" multiple style="height:90px"></select>
+      <span style="font-size:11px;color:var(--muted);margin-top:4px;display:block">Hold Ctrl/Cmd to select multiple</span>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modalFunding')">Cancel</button>
+      <button class="btn-primary" id="confirmFunding">Link account</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add currency wallet -->
+<div class="modal-overlay" id="modalAddCur">
+  <div class="modal">
+    <h3>Add currency wallet</h3>
+    <div class="form-field">
+      <label>Currency</label>
+      <select class="form-select" id="addCurSelect"></select>
+    </div>
+    <div class="form-field">
+      <label>Initial balance (optional)</label>
+      <input class="form-input" type="number" id="addCurBal" value="0" min="0" step="any" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modalAddCur')">Cancel</button>
+      <button class="btn-primary" id="confirmAddCur">Create wallet</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="index.js" defer></script>
+</body>
+</html>

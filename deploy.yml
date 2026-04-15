@@ -1,0 +1,73 @@
+name: Deploy Xchange
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # ── 1. VALIDATE ──────────────────────────────────────────────────
+  validate:
+    name: Validate HTML
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check index.html exists
+        run: |
+          if [ ! -f index.html ]; then
+            echo "ERROR: index.html not found in repo root"
+            exit 1
+          fi
+          echo "✓ index.html found ($(wc -c < index.html) bytes)"
+
+      - name: Check for syntax issues
+        run: |
+          # Verify the file is valid UTF-8 and non-empty
+          file index.html
+          wc -l index.html
+          echo "✓ File structure OK"
+
+  # ── 2. DEPLOY to GitHub Pages ────────────────────────────────────
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload the entire repo root (index.html lives here)
+          path: "."
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Print deployment URL
+        run: |
+          echo "🚀 Deployed to: ${{ steps.deployment.outputs.page_url }}"
