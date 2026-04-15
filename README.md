@@ -14,7 +14,7 @@ A clean, production-grade currency converter with multi-currency wallet support,
 ## Quick start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/xchange.git
+git clone https://github.com/gabrielngige/converter
 cd xchange 
 open index.html   # works locally in any browser
 ```
@@ -36,7 +36,7 @@ The included GitHub Actions workflow deploys automatically on every push to `mai
 
 Your app will be live at:
 ```
-https://YOUR_USERNAME.github.io/xchange/
+https://github.com/gabrielngige/converter.github.io
 ```
 
 ## Project structure
