@@ -36,7 +36,7 @@ The included GitHub Actions workflow deploys automatically on every push to `mai
 
 Your app will be live at:
 ```
-https://github.com/gabrielngige/converter.github.io/Xchange
+https://gabrielngige.github.io/converter/
 ```
 
 ## Project structure
